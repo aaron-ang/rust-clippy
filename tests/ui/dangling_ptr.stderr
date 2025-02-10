@@ -1,0 +1,47 @@
+error: manual creation of a dangling pointer
+  --> tests/ui/dangling_ptr.rs:7:13
+   |
+LL |     let _ = 8 as *const u32;
+   |             ^^^^^^^^^^^^^^^ help: try: `std::ptr::dangling::<u32>()`
+   |
+   = note: `-D clippy::dangling-ptr` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::dangling_ptr)]`
+
+error: manual creation of a dangling pointer
+  --> tests/ui/dangling_ptr.rs:8:13
+   |
+LL |     let _ = 8 as *mut f64;
+   |             ^^^^^^^^^^^^^ help: try: `std::ptr::dangling_mut::<f64>()`
+
+error: manual creation of a dangling pointer
+  --> tests/ui/dangling_ptr.rs:9:24
+   |
+LL |     let _: *const u8 = 8 as *const _;
+   |                        ^^^^^^^^^^^^^ help: try: `std::ptr::dangling()`
+
+error: manual creation of a dangling pointer
+  --> tests/ui/dangling_ptr.rs:14:9
+   |
+LL |     foo(8 as *const _, 8 as *mut _);
+   |         ^^^^^^^^^^^^^ help: try: `std::ptr::dangling()`
+
+error: manual creation of a dangling pointer
+  --> tests/ui/dangling_ptr.rs:14:24
+   |
+LL |     foo(8 as *const _, 8 as *mut _);
+   |                        ^^^^^^^^^^^ help: try: `std::ptr::dangling_mut()`
+
+error: manual creation of a dangling pointer
+  --> tests/ui/dangling_ptr.rs:31:9
+   |
+LL |     foo(8 as *const _, 8 as *mut _);
+   |         ^^^^^^^^^^^^^ help: try: `std::ptr::dangling()`
+
+error: manual creation of a dangling pointer
+  --> tests/ui/dangling_ptr.rs:31:24
+   |
+LL |     foo(8 as *const _, 8 as *mut _);
+   |                        ^^^^^^^^^^^ help: try: `std::ptr::dangling_mut()`
+
+error: aborting due to 7 previous errors
+

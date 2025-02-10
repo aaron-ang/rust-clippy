@@ -5501,6 +5501,7 @@ Released 2018-09-13
 [`create_dir`]: https://rust-lang.github.io/rust-clippy/master/index.html#create_dir
 [`crosspointer_transmute`]: https://rust-lang.github.io/rust-clippy/master/index.html#crosspointer_transmute
 [`cyclomatic_complexity`]: https://rust-lang.github.io/rust-clippy/master/index.html#cyclomatic_complexity
+[`dangling_ptr`]: https://rust-lang.github.io/rust-clippy/master/index.html#dangling_ptr
 [`dbg_macro`]: https://rust-lang.github.io/rust-clippy/master/index.html#dbg_macro
 [`debug_assert_with_mut_call`]: https://rust-lang.github.io/rust-clippy/master/index.html#debug_assert_with_mut_call
 [`decimal_literal_representation`]: https://rust-lang.github.io/rust-clippy/master/index.html#decimal_literal_representation

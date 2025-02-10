@@ -14,6 +14,7 @@ mod cast_sign_loss;
 mod cast_slice_different_sizes;
 mod cast_slice_from_raw_parts;
 mod char_lit_as_u8;
+mod dangling_ptr;
 mod fn_to_numeric_cast;
 mod fn_to_numeric_cast_any;
 mod fn_to_numeric_cast_with_truncation;
@@ -754,6 +755,30 @@ declare_clippy_lint! {
     "detects `as *mut _` and `as *const _` conversion"
 }
 
+declare_clippy_lint! {
+    /// ### What it does
+    /// Checks for casts from a positive integer literal to some pointer type
+    ///
+    /// ### Why is this bad?
+    /// This creates a pointer with no provenance which might cause incorrect compiler optimizations.
+    /// It is better expressed as {`std`, `core`}`::ptr::`{`dangling`, `dangling_mut`}.
+    ///
+    /// ### Example
+    /// ```no_run
+    /// let a = 4 as *const u32;
+    /// let b = std::mem::align_of::<u32>() as *const u32;
+    /// ```
+    /// Use instead:
+    /// ```no_run
+    /// let a = std::ptr::dangling::<u32>();
+    /// let b = std::ptr::dangling::<u32>();
+    /// ```
+    #[clippy::version = "1.86.0"]
+    pub DANGLING_PTR,
+    style,
+    "casting a positive integer literal to a pointer with no provenance"
+}
+
 pub struct Casts {
     msrv: Msrv,
 }
@@ -792,6 +817,7 @@ impl_lint_pass!(Casts => [
     ZERO_PTR,
     REF_AS_PTR,
     AS_POINTER_UNDERSCORE,
+    DANGLING_PTR,
 ]);
 
 impl<'tcx> LateLintPass<'tcx> for Casts {
@@ -819,6 +845,10 @@ impl<'tcx> LateLintPass<'tcx> for Casts {
             fn_to_numeric_cast::check(cx, expr, cast_from_expr, cast_from, cast_to);
             fn_to_numeric_cast_with_truncation::check(cx, expr, cast_from_expr, cast_from, cast_to);
             zero_ptr::check(cx, expr, cast_from_expr, cast_to_hir);
+
+            if self.msrv.meets(msrvs::DANGLING_PTR) {
+                dangling_ptr::check(cx, expr, cast_from_expr, cast_to_hir);
+            }
 
             if cast_to.is_numeric() {
                 cast_possible_truncation::check(cx, expr, cast_from_expr, cast_from, cast_to, cast_to_hir.span);
