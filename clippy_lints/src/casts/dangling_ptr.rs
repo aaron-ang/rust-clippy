@@ -8,19 +8,19 @@ use rustc_lint::LateContext;
 use super::DANGLING_PTR;
 
 pub(super) fn check(cx: &LateContext<'_>, expr: &Expr<'_>, from: &Expr<'_>, to: &Ty<'_>) {
-    if let TyKind::Ptr(ref mut_ty) = to.kind {
+    if let TyKind::Ptr(ref ptr_ty) = to.kind {
         let init_expr = expr_or_init(cx, from);
-        if is_expr_const_aligned(cx, init_expr)
+        if is_expr_const_aligned(cx, init_expr, ptr_ty.ty)
             && let Some(std_or_core) = std_or_core(cx)
         {
-            let sugg_fn = match mut_ty.mutbl {
+            let sugg_fn = match ptr_ty.mutbl {
                 Mutability::Not => "ptr::dangling",
                 Mutability::Mut => "ptr::dangling_mut",
             };
 
-            let sugg = if let TyKind::Infer(()) = mut_ty.ty.kind {
+            let sugg = if let TyKind::Infer(()) = ptr_ty.ty.kind {
                 format!("{std_or_core}::{sugg_fn}()")
-            } else if let Some(mut_ty_snip) = mut_ty.ty.span.get_source_text(cx) {
+            } else if let Some(mut_ty_snip) = ptr_ty.ty.span.get_source_text(cx) {
                 format!("{std_or_core}::{sugg_fn}::<{mut_ty_snip}>()")
             } else {
                 return;

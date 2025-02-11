@@ -6,16 +6,18 @@ pub fn foo(_const: *const f32, _mut: *mut i64) {}
 fn main() {
     let _ = std::ptr::dangling::<u32>();
     let _ = std::ptr::dangling_mut::<f64>();
+    let _ = std::ptr::dangling_mut::<i64>();
+    let _ = std::ptr::dangling::<u8>();
     let _: *const u8 = std::ptr::dangling();
 
-    let _ = mem::align_of::<u32>() as u32;
-    let _ = mem::align_of::<u64>() as u64;
+    let _ = std::ptr::dangling::<u32>();
+    let _ = std::ptr::dangling_mut::<u64>();
 
     foo(std::ptr::dangling(), std::ptr::dangling_mut());
 
     // should not lint
     let _ = 1 as *const u32;
-    let _ = mem::align_of::<u32>() as u32;
+    let _ = mem::align_of::<u32>() as *const u64;
 
     foo(0 as _, 0 as _);
 }

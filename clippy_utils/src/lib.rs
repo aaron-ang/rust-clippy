@@ -2228,42 +2228,43 @@ pub fn is_expr_used_or_unified(tcx: TyCtxt<'_>, expr: &Expr<'_>) -> bool {
     )
 }
 
-// Checks if the given expression is a call to `align_of`
-// or casting to a type with the same alignment
-pub fn is_expr_const_aligned(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
+// Checks if the given expression is a call to `align_of` whose generic argument matches the target
+// type, or a positive constant literal that matches the target type's alignment.
+pub fn is_expr_const_aligned(cx: &LateContext<'_>, expr: &Expr<'_>, to: &hir::Ty<'_>) -> bool {
     match expr.kind {
-        ExprKind::Call(fun, _) => is_align_of_call(cx, fun, expr),
-        ExprKind::Lit(lit) => is_align_lit(cx, lit, expr),
+        ExprKind::Call(fun, _) => is_align_of_call(cx, fun, to),
+        ExprKind::Lit(lit) => is_align_lit(cx, lit, to),
         _ => false,
     }
 }
 
-fn is_align_of_call(cx: &LateContext<'_>, fun: &Expr<'_>, expr: &Expr<'_>) -> bool {
-    let ExprKind::Path(QPath::Resolved(None, path)) = fun.kind else {
-        return false;
-    };
-    let Some(args) = path.segments.last().and_then(|seg| seg.args) else {
-        return false;
-    };
-    let [hir::GenericArg::Type(ty)] = args.args else {
-        return false;
-    };
-    path_def_id(cx, fun).is_some_and(|id| {
+fn is_align_of_call(cx: &LateContext<'_>, fun: &Expr<'_>, to: &hir::Ty<'_>) -> bool {
+    if let ExprKind::Path(QPath::Resolved(_, path)) = fun.kind
+        && let Some(fun_id) = path_def_id(cx, fun)
+        && match_def_path(cx, fun_id, &paths::ALIGN_OF)
+        && let Some(args) = path.segments.last().and_then(|seg| seg.args)
+        && let [hir::GenericArg::Type(generic_ty)] = args.args
+    {
         let typeck = cx.typeck_results();
-        match_any_def_paths(cx, id, &[&paths::CORE_ALIGN_OF, &paths::STD_ALIGN_OF]).is_some()
-            && typeck.node_type(ty.hir_id) == typeck.expr_ty(expr)
-    })
+        return typeck.node_type(generic_ty.hir_id) == typeck.node_type(to.hir_id);
+    }
+    false
 }
 
-fn is_align_lit(cx: &LateContext<'_>, lit: &Spanned<LitKind>, expr: &Expr<'_>) -> bool {
+fn is_align_lit(cx: &LateContext<'_>, lit: &Spanned<LitKind>, to: &hir::Ty<'_>) -> bool {
     let LitKind::Int(val, _) = lit.node else { return false };
-    let ty = cx.typeck_results().expr_ty(expr);
-    if !is_normalizable(cx, cx.param_env, ty) {
+    if val == 0 {
         return false;
     }
-    cx.tcx
-        .layout_of(cx.typing_env().as_query_input(ty))
-        .is_ok_and(|layout| val == u128::from(layout.align.abi.bytes()))
+    let to_mid_ty = cx.typeck_results().node_type(to.hir_id);
+    is_normalizable(cx, cx.param_env, to_mid_ty)
+        && cx
+            .tcx
+            .layout_of(cx.typing_env().as_query_input(to_mid_ty))
+            .is_ok_and(|layout| {
+                let align = u128::from(layout.align.abi.bytes());
+                u128::from(val) % align == 0
+            })
 }
 
 /// Checks if the expression is the final expression returned from a block.

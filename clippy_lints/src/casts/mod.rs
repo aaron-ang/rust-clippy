@@ -757,7 +757,8 @@ declare_clippy_lint! {
 
 declare_clippy_lint! {
     /// ### What it does
-    /// Checks for casts from a positive integer literal to some pointer type
+    /// Checks for casts to a pointer of type `T`, from `mem::align_of::<U>()` such that `T` = `U`,
+    /// or from a constant address such that it matches `T`'s alignment.
     ///
     /// ### Why is this bad?
     /// This creates a pointer with no provenance which might cause incorrect compiler optimizations.
