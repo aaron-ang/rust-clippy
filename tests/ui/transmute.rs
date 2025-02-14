@@ -60,7 +60,7 @@ fn useless() {
         let _: *const usize = std::mem::transmute(5_isize);
         //~^ ERROR: transmute from an integer to a pointer
 
-        let _ = 5_isize as *const usize;
+        let _ = std::ptr::dangling::<usize>();
 
         let _: *const usize = std::mem::transmute(1 + 1usize);
         //~^ ERROR: transmute from an integer to a pointer

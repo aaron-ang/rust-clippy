@@ -16,7 +16,7 @@ fn one_liners() {
 }
 
 pub const ZPTR: *const usize = 0 as *const _;
-pub const NOT_ZPTR: *const usize = 1 as *const _;
+pub const NOT_ZPTR: *const usize = std::ptr::dangling();
 
 fn transmute_const() {
     unsafe {
