@@ -760,8 +760,9 @@ declare_clippy_lint! {
     /// Checks for casts of small constant literals or `mem::align_of` results to raw pointers.
     ///
     /// ### Why is this bad?
-    /// Creating a pointer through casting from a small constant or alignment value is unsafe and can lead
-    /// to undefined behavior since it creates an invalid dangling pointer.
+    /// Creating a pointer through casting from a small constant or alignment value is unsafe
+    /// and can lead to undefined behavior since it creates an invalid dangling pointer.
+    /// If this is intended, use `std::ptr::dangling` or `std::ptr::dangling_mut` instead.
     ///
     /// ### Example
     /// ```no_run
