@@ -120,7 +120,7 @@ use rustc_middle::ty::{
     TyCtxt, TypeVisitableExt, UintTy, UpvarCapture,
 };
 use rustc_span::hygiene::{ExpnKind, MacroKind};
-use rustc_span::source_map::{SourceMap, Spanned};
+use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::{Ident, Symbol, kw};
 use rustc_span::{InnerSpan, Span, sym};
 use rustc_target::abi::Integer;
@@ -128,9 +128,7 @@ use visitors::{Visitable, for_each_unconsumed_temporary};
 
 use crate::consts::{ConstEvalCtxt, Constant, mir_to_const};
 use crate::higher::Range;
-use crate::ty::{
-    adt_and_variant_of_res, can_partially_move_ty, expr_sig, is_copy, is_normalizable, is_recursively_primitive_type,
-};
+use crate::ty::{adt_and_variant_of_res, can_partially_move_ty, expr_sig, is_copy, is_recursively_primitive_type};
 use crate::visitors::for_each_expr_without_closures;
 use rustc_middle::hir::nested_filter;
 
@@ -2226,45 +2224,6 @@ pub fn is_expr_used_or_unified(tcx: TyCtxt<'_>, expr: &Expr<'_>) -> bool {
             _
         ))
     )
-}
-
-// Checks if the given expression is a call to `align_of` whose generic argument matches the target
-// type, or a positive constant literal that matches the target type's alignment.
-pub fn is_expr_const_aligned(cx: &LateContext<'_>, expr: &Expr<'_>, to: &hir::Ty<'_>) -> bool {
-    match expr.kind {
-        ExprKind::Call(fun, _) => is_align_of_call(cx, fun, to),
-        ExprKind::Lit(lit) => is_align_lit(cx, lit, to),
-        _ => false,
-    }
-}
-
-fn is_align_of_call(cx: &LateContext<'_>, fun: &Expr<'_>, to: &hir::Ty<'_>) -> bool {
-    if let ExprKind::Path(QPath::Resolved(_, path)) = fun.kind
-        && let Some(fun_id) = path_def_id(cx, fun)
-        && match_def_path(cx, fun_id, &paths::ALIGN_OF)
-        && let Some(args) = path.segments.last().and_then(|seg| seg.args)
-        && let [hir::GenericArg::Type(generic_ty)] = args.args
-    {
-        let typeck = cx.typeck_results();
-        return typeck.node_type(generic_ty.hir_id) == typeck.node_type(to.hir_id);
-    }
-    false
-}
-
-fn is_align_lit(cx: &LateContext<'_>, lit: &Spanned<LitKind>, to: &hir::Ty<'_>) -> bool {
-    let LitKind::Int(val, _) = lit.node else { return false };
-    if val == 0 {
-        return false;
-    }
-    let to_mid_ty = cx.typeck_results().node_type(to.hir_id);
-    is_normalizable(cx, cx.param_env, to_mid_ty)
-        && cx
-            .tcx
-            .layout_of(cx.typing_env().as_query_input(to_mid_ty))
-            .is_ok_and(|layout| {
-                let align = u128::from(layout.align.abi.bytes());
-                u128::from(val) % align == 0
-            })
 }
 
 /// Checks if the expression is the final expression returned from a block.

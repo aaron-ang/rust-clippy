@@ -93,7 +93,7 @@ pub static LINTS: &[&crate::LintInfo] = &[
     crate::casts::CAST_SLICE_DIFFERENT_SIZES_INFO,
     crate::casts::CAST_SLICE_FROM_RAW_PARTS_INFO,
     crate::casts::CHAR_LIT_AS_U8_INFO,
-    crate::casts::DANGLING_PTR_INFO,
+    crate::casts::MANUAL_DANGLING_PTR_INFO,
     crate::casts::FN_TO_NUMERIC_CAST_INFO,
     crate::casts::FN_TO_NUMERIC_CAST_ANY_INFO,
     crate::casts::FN_TO_NUMERIC_CAST_WITH_TRUNCATION_INFO,

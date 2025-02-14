@@ -14,10 +14,10 @@ mod cast_sign_loss;
 mod cast_slice_different_sizes;
 mod cast_slice_from_raw_parts;
 mod char_lit_as_u8;
-mod dangling_ptr;
 mod fn_to_numeric_cast;
 mod fn_to_numeric_cast_any;
 mod fn_to_numeric_cast_with_truncation;
+mod manual_dangling_ptr;
 mod ptr_as_ptr;
 mod ptr_cast_constness;
 mod ref_as_ptr;
@@ -757,27 +757,28 @@ declare_clippy_lint! {
 
 declare_clippy_lint! {
     /// ### What it does
-    /// Checks for casts to a pointer of type `T`, from `mem::align_of::<U>()` such that `T` = `U`,
-    /// or from a constant address such that it matches `T`'s alignment.
+    /// Checks for casts of small constant literals or `mem::align_of` results to raw pointers.
     ///
     /// ### Why is this bad?
-    /// This creates a pointer with no provenance which might cause incorrect compiler optimizations.
-    /// It is better expressed as {`std`, `core`}`::ptr::`{`dangling`, `dangling_mut`}.
+    /// Creating a pointer through casting from a small constant or alignment value is unsafe and can lead
+    /// to undefined behavior since it creates an invalid dangling pointer.
     ///
     /// ### Example
     /// ```no_run
-    /// let a = 4 as *const u32;
-    /// let b = std::mem::align_of::<u32>() as *const u32;
+    /// let ptr = 4 as *const u32;
+    /// let aligned = std::mem::align_of::<u32>() as *const u32;
+    /// let mut_ptr: *mut i64 = 8 as *mut _;
     /// ```
     /// Use instead:
     /// ```no_run
-    /// let a = std::ptr::dangling::<u32>();
-    /// let b = std::ptr::dangling::<u32>();
+    /// let ptr = std::ptr::dangling::<u32>();
+    /// let aligned = std::ptr::dangling::<u32>();
+    /// let mut_ptr: *mut i64 = std::ptr::dangling_mut();
     /// ```
     #[clippy::version = "1.86.0"]
-    pub DANGLING_PTR,
+    pub MANUAL_DANGLING_PTR,
     style,
-    "casting a positive integer literal to a pointer with no provenance"
+    "casting small constant literals to pointers to create dangling pointers"
 }
 
 pub struct Casts {
@@ -818,7 +819,7 @@ impl_lint_pass!(Casts => [
     ZERO_PTR,
     REF_AS_PTR,
     AS_POINTER_UNDERSCORE,
-    DANGLING_PTR,
+    MANUAL_DANGLING_PTR,
 ]);
 
 impl<'tcx> LateLintPass<'tcx> for Casts {
@@ -847,8 +848,8 @@ impl<'tcx> LateLintPass<'tcx> for Casts {
             fn_to_numeric_cast_with_truncation::check(cx, expr, cast_from_expr, cast_from, cast_to);
             zero_ptr::check(cx, expr, cast_from_expr, cast_to_hir);
 
-            if self.msrv.meets(msrvs::DANGLING_PTR) {
-                dangling_ptr::check(cx, expr, cast_from_expr, cast_to_hir);
+            if self.msrv.meets(msrvs::MANUAL_DANGLING_PTR) {
+                manual_dangling_ptr::check(cx, expr, cast_from_expr, cast_to_hir);
             }
 
             if cast_to.is_numeric() {
