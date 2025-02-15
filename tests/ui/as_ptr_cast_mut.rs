@@ -29,7 +29,7 @@ fn main() {
     let _ = string.as_mut_ptr() as *mut u8;
     let _ = string.as_mut_ptr() as *const u8;
 
-    let nn = std::ptr::NonNull::new(std::ptr::dangling_mut::<u8>()).unwrap();
+    let nn = std::ptr::NonNull::new(4 as *mut u8).unwrap();
     let _ = nn.as_ptr() as *mut u8;
 
     let mut wrap = MutPtrWrapper(Vec::new());
