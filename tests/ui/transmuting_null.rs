@@ -3,6 +3,7 @@
 #![allow(clippy::zero_ptr)]
 #![allow(clippy::transmute_ptr_to_ref)]
 #![allow(clippy::eq_op, clippy::missing_transmute_annotations)]
+#![allow(clippy::manual_dangling_ptr)]
 
 // Easy to lint because these only span one line.
 fn one_liners() {
@@ -16,7 +17,7 @@ fn one_liners() {
 }
 
 pub const ZPTR: *const usize = 0 as *const _;
-pub const NOT_ZPTR: *const usize = std::ptr::dangling();
+pub const NOT_ZPTR: *const usize = 1 as *const _;
 
 fn transmute_const() {
     unsafe {
